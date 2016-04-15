@@ -1,0 +1,179 @@
+<!DOCTYPE HTML>
+<html>
+<meta charset="UTF-8">
+
+<head>
+    <style>
+    * {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    form {
+        padding: 30px;
+    }
+    input[type=button] {
+        padding: 5px 10px;
+    }
+    ._li {
+        line-height: 36px;
+    }
+    #result{
+      padding-top:30px;
+    }
+    dt,dd{
+      width: 100%;
+      display:-webkit-box;
+      border-bottom:1px solid #ccc;
+    }
+    dt span,dd span{
+      -webkit-box-flex: 1;
+      display:block;
+      box-sizing: border-box;
+      padding:0 2px;
+      line-height:38px;
+      text-align:center;
+    }
+    dd{
+      padding:3px 0;
+    }
+    dd input{
+      line-height:36px;
+      width: 100%;
+      outline:none;
+      box-sizing: border-box;
+      text-align:center;
+      border:1px solid red;
+    }
+    i{
+      font-style:normal;
+    }
+    dd.hide input{
+      border:none;
+    }
+    .inputs{
+      position: relative;
+    }
+    .inputs:after{
+      display:block;
+      width: 100%;
+      height:100%;
+      content: '';
+      position: absolute;
+      top:0;
+      left:0;
+      z-index:100;
+    }
+    </style>
+
+</head>
+
+<body>
+    <form id="myForm">
+        <div class="_li">
+            <label for="name">姓名：
+                <input type="text" name="name" value="">
+            </label>
+        </div>
+        <div class="_li">
+            <label for="age">年龄：
+                <input type="text" name="age" value="">
+            </label>
+        </div>
+        <div class="_li">
+            <label for="sex">性别：男
+                <input type="radio" checked="checked" name="sex" value="女">女：
+                <input type="radio" name="sex" value="男">
+            </label>
+        </div>
+        <div class="_li">
+            <input id="add" type="button" value="添加数据">
+        </div>
+    </form>
+    <div>
+      <input type="button" value="删除数据表" id="del">
+    </div>
+    <div id="result">
+        
+    </div>
+</body>
+<script type="text/html" id="Listpl">
+  {{if data && data.length > 0}}
+    <dt><span>姓名</span><span>性别</span><span>年龄</span><span>操作</span></dt>
+    {{each data}}
+      <dd><span>{{$value.name}}</span><span>{{$value.sex}}</span><span>{{$value.age}}</span><span onclick="delItem.call(this,'{{$value.name}}')">删除</span></dd>
+    {{/each}}
+  {{else}}
+      <p style="text-align:center;">暂无数据</p>
+  {{/if}}
+</script>
+<script type="text/javascript" src="template.js"></script>
+<script type="text/javascript" src="qccrWebSql.js"></script>
+</html>
+<script type="text/javascript">
+  var _database = new qccrWebSql(),
+      _form = document.getElementById('myForm'),
+      _del = document.getElementById('del'),
+      _result = document.getElementById('result'),
+      _name = _form[name='name'],
+      _age = _form[name='age'],
+      _sex = _form[name='sex'],
+      _addBtn = document.getElementById('add');
+      _addBtn.onclick = function(){
+        var v1 = _name.value.replace(/\s*/g,''),
+            v2 = _age.value.replace(/\s*/g,''),
+            v3 = _sex.value,
+            result = {};
+            if(v1 == ''){
+              console.log('请输入姓名');
+              return;
+            }
+            if(v2 == ''){
+              console.log('请输入年龄');
+              return;
+            }
+            if(!/^\d+$/g.test(v2)){
+              console.log('请输入正确的年龄');
+              return;
+            }
+            result = {
+              name : v1,
+              age : v2,
+              sex : v3=="" ? "人妖" : v3
+            }
+            _database.add('student',[result],function(){
+              show();
+            });
+      }
+      
+    function show(){
+      _database.read('student',function(res){
+        _result.innerHTML = template('Listpl',{
+          data : res || []
+        });
+      });
+    }
+    show();
+
+    function delItem(name){
+       var _node = this.parentNode;
+        _database.remove('student','where name="'+name+'"',function(res){
+          if(res){
+            _node.parentNode.removeChild(_node);
+            var length = _result.getElementsByTagName('dd').length;
+            if(length<=0){
+              _result.innerHTML = '<p style="text-align:center;">暂无数据</p>';
+            }
+            
+          }
+        }); 
+    }
+    _del.onclick = function(){
+      _database.remove('student',function(res){
+        if(res){
+          _result.innerHTML = '<p style="text-align:center;">暂无数据</p>';
+        }
+      })
+    }
+</script>
+
